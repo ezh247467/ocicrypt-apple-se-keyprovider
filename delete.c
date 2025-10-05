@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 int main(void) {
-    const char *tag = "com.example.ecdhkey.default";
+    const char *tag = "se.ocicrypt.default.tag";
 
     CFDataRef tagData = CFDataCreate(NULL, (const UInt8 *)tag, (CFIndex)strlen(tag));
 

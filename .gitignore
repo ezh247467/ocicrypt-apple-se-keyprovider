@@ -2,3 +2,4 @@ pub_key
 delete
 starter
 se_oci_crypt
+*.tar

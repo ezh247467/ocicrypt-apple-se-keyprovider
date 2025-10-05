@@ -24,13 +24,15 @@ int se_ecdh_shared_secret(const uint8_t *eph_pub, size_t eph_len,
     if (!ephKey) return -3;
 
     // Lookup SE private key by tag
-    const char *tagStr = "com.example.ecdhkey.default";
+    const char *tagStr = "se.ocicrypt.default.tag";
     CFStringRef tag = CFStringCreateWithCString(NULL, tagStr, kCFStringEncodingUTF8);
     CFDataRef tagData = CFStringCreateExternalRepresentation(NULL, tag, kCFStringEncodingUTF8, 0);
     CFRelease(tag);
 
-    const void *queryKeys[] = { kSecClass, kSecAttrApplicationTag, kSecAttrKeyType, kSecReturnRef };
-    const void *queryVals[] = { kSecClassKey, tagData, kSecAttrKeyTypeECSECPrimeRandom, kCFBooleanTrue };
+    const void *queryKeys[] = { kSecClass, kSecAttrApplicationTag, kSecAttrKeyType, kSecAttrKeyClass };
+    const void *queryVals[] = { kSecClassKey, tagData, kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyClassPrivate };
+    // kSecAttrTokenID, kSecAttrTokenIDSecureEnclave
+    
     CFDictionaryRef query = CFDictionaryCreate(NULL, queryKeys, queryVals, 4,
         &kCFTypeDictionaryKeyCallBacks,
         &kCFTypeDictionaryValueCallBacks);

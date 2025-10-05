@@ -1,12 +1,11 @@
 // clang starter.c -o starter -framework Security -framework CoreFoundation
-// codesign -s - --entitlements entitlements.plist ./starter 
 #include <Security/Security.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-static const char *DEFAULT_TAG = "com.example.ecdhkey.default";
+static const char *DEFAULT_TAG = "se.ocicrypt.default.tag";
 
 static SecKeyRef find_existing_key(const char *tag) {
     CFDataRef tagData = CFDataCreate(NULL, (const UInt8 *)tag, (CFIndex)strlen(tag));
@@ -15,8 +14,8 @@ static SecKeyRef find_existing_key(const char *tag) {
 
     CFDictionaryAddValue(query, kSecClass, kSecClassKey);
     CFDictionaryAddValue(query, kSecAttrApplicationTag, tagData);
-    CFDictionaryAddValue(query, kSecReturnRef, kCFBooleanTrue);
     CFDictionaryAddValue(query, kSecAttrKeyClass, kSecAttrKeyClassPrivate);
+    // kSecAttrTokenID, kSecAttrTokenIDSecureEnclave
 
     SecKeyRef key = NULL;
     OSStatus status = SecItemCopyMatching(query, (CFTypeRef *)&key);
@@ -41,6 +40,7 @@ static SecKeyRef create_new_key(const char *tag) {
 
     const void *keys[] = { kSecAttrKeyType, kSecAttrKeySizeInBits, kSecPrivateKeyAttrs };
     const void *vals[] = { kSecAttrKeyTypeECSECPrimeRandom, keySizeNum, privAttrs };
+    // kSecAttrTokenID, kSecAttrTokenIDSecureEnclave
 
     CFDictionaryRef params = CFDictionaryCreate(NULL, keys, vals, 3,
         &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
