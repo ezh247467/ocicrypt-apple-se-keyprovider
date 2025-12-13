@@ -1,0 +1,9 @@
+{
+  "key-providers": {
+    "apple-se": {
+      "cmd": {
+        "path": "/path/to/se_oci_crypt"
+      }
+    }
+  }
+}

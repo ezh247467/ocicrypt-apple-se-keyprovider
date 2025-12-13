@@ -2,11 +2,15 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdio.h>
 
-int main(void) {
-    const char *tag = "se.ocicrypt.default.tag";
+static const char *DEFAULT_TAG = "se.ocicrypt.default.tag";
+
+int main(int argc, char **argv) {
+    const char *tag = (argc > 1) ? argv[1] : DEFAULT_TAG;
+    printf("Using tag: %s\n", tag);
 
     CFDataRef tagData = CFDataCreate(NULL, (const UInt8 *)tag, (CFIndex)strlen(tag));
 
+    // Build a query to delete the private key with that tag
     CFMutableDictionaryRef query = CFDictionaryCreateMutable(NULL, 0,
         &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 

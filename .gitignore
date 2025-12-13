@@ -3,3 +3,5 @@ delete
 starter
 se_oci_crypt
 *.tar
+private*
+*.drawio

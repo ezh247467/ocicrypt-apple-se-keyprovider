@@ -1,4 +1,3 @@
-// clang starter.c -o starter -framework Security -framework CoreFoundation
 #include <Security/Security.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdio.h>
@@ -7,11 +6,18 @@
 
 static const char *DEFAULT_TAG = "se.ocicrypt.default.tag";
 
+/**
+ * Find existing private key by tag and return its reference.
+ * 
+ * @param tag Tag name associated with the key
+ * @return SecKeyRef || NULL
+ */
 static SecKeyRef find_existing_key(const char *tag) {
     CFDataRef tagData = CFDataCreate(NULL, (const UInt8 *)tag, (CFIndex)strlen(tag));
     CFMutableDictionaryRef query = CFDictionaryCreateMutable(NULL, 0,
     &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 
+    // Attributes of the key to query for
     CFDictionaryAddValue(query, kSecClass, kSecClassKey);
     CFDictionaryAddValue(query, kSecAttrApplicationTag, tagData);
     CFDictionaryAddValue(query, kSecAttrKeyClass, kSecAttrKeyClassPrivate);
@@ -27,9 +33,18 @@ static SecKeyRef find_existing_key(const char *tag) {
     return NULL;
 }
 
+/**
+ * Create a new private key object associated with the given tag.
+ * NIST P-256 curve key is the only key type supported by Secure Enclave
+ * so we create that.
+ * 
+ * @param tag Tag associated with private key
+ * @return SecKeyRef || NULL
+ */
 static SecKeyRef create_new_key(const char *tag) {
     CFDataRef tagData = CFDataCreate(NULL, (const UInt8 *)tag, (CFIndex)strlen(tag));
 
+    // Attributes for the private key
     CFMutableDictionaryRef privAttrs = CFDictionaryCreateMutable(NULL, 0,
         &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionaryAddValue(privAttrs, kSecAttrIsPermanent, kCFBooleanTrue);
@@ -38,6 +53,7 @@ static SecKeyRef create_new_key(const char *tag) {
     int keySize = 256;
     CFNumberRef keySizeNum = CFNumberCreate(NULL, kCFNumberIntType, &keySize);
 
+    // P-256 EC key parameters
     const void *keys[] = { kSecAttrKeyType, kSecAttrKeySizeInBits, kSecPrivateKeyAttrs };
     const void *vals[] = { kSecAttrKeyTypeECSECPrimeRandom, keySizeNum, privAttrs };
     // kSecAttrTokenID, kSecAttrTokenIDSecureEnclave
@@ -64,8 +80,9 @@ static SecKeyRef create_new_key(const char *tag) {
     return privKey;
 }
 
-int main(void) {
-    const char *tag = DEFAULT_TAG;
+int main(int argc, char **argv) {
+    const char *tag = (argc > 1) ? argv[1] : DEFAULT_TAG;
+    printf("Using tag: %s\n", tag);
 
     SecKeyRef privKey = find_existing_key(tag);
     if (privKey) {
@@ -83,6 +100,7 @@ int main(void) {
         return 1;
     }
 
+    // Extract public key bytes to write to file
     CFErrorRef error = NULL;
     CFDataRef pubData = SecKeyCopyExternalRepresentation(pubKey, &error);
     if (!pubData) {
@@ -101,6 +119,7 @@ int main(void) {
         return 1;
     }
 
+    // Write public key bytes to file "pub_key"
     const UInt8 *bytes = CFDataGetBytePtr(pubData);
     size_t len = (size_t)CFDataGetLength(pubData);
     FILE *f = fopen("pub_key", "wb");

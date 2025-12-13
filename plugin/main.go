@@ -98,6 +98,7 @@ func WrapKey(keyP keyprovider.KeyProviderKeyWrapProtocolInput) ([]byte, error) {
 		log.Fatalf("Error decoding pubkey: %v, %s, %s", err, m["pub"][0], string(seURI))
 	}
 
+	// Parse raw public key data (uncompressed EC point)
 	curve := elliptic.P256()
     x, y := elliptic.Unmarshal(curve, pubData)
     if x == nil {
@@ -110,7 +111,7 @@ func WrapKey(keyP keyprovider.KeyProviderKeyWrapProtocolInput) ([]byte, error) {
         Y:     y,
     }
 
-	// ECIES: generate ephemeral keypair (P-256)
+	// ECIES: Generate ephemeral keypair (P-256) for Diffie-Hellman key agreement
 	ephPriv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		log.Fatalf("failed to generate ephemeral EC key: %v", err)
@@ -118,18 +119,18 @@ func WrapKey(keyP keyprovider.KeyProviderKeyWrapProtocolInput) ([]byte, error) {
 
 	ephPubBytes := elliptic.Marshal(elliptic.P256(), ephPriv.PublicKey.X, ephPriv.PublicKey.Y)
 
-	// ECDH: compute shared secret
+	// ECDH: Compute shared secret using ephPriv and ecPub
 	raw, _ := ecPub.Curve.ScalarMult(ecPub.X, ecPub.Y, ephPriv.D.Bytes())
 	sharedSecret := raw.Bytes()
 
-	// Derive wrapping key from sharedSecret via HKDF-SHA256
+	// Derive session key (wrappingKey) from shared secret via HKDF-SHA256
 	hkdfReader := hkdf.New(sha256.New, sharedSecret, nil, nil)
 	wrappingKey := make([]byte, 32)
 	if _, err := io.ReadFull(hkdfReader, wrappingKey); err != nil {
 		log.Fatalf("hkdf failed: %v", err)
 	}
 
-	// Encrypt the CEK with wrappingKey (AES-GCM)
+	// Encrypt the CEK with session key (AES-GCM)
 	block, err := aes.NewCipher(wrappingKey)
 	if err != nil {
 		return nil, fmt.Errorf("creating AES cipher: %v", err)
@@ -170,6 +171,7 @@ func UnwrapKey(keyP keyprovider.KeyProviderKeyWrapProtocolInput) ([]byte, error)
 		return nil, err
 	}
 
+	// Extract the ephemeral public key and wrapped CEK from the annotation packet
 	ephPub := apkt.EphPub
 	ciphertext := apkt.WrappedKey
 
@@ -202,11 +204,13 @@ func UnwrapKey(keyP keyprovider.KeyProviderKeyWrapProtocolInput) ([]byte, error)
 		return nil, errors.New("error: mode must set to decrypt")
 	}
 
+	// Derive AES session key the ephemeral public key and the private key in SE
 	sessionKey, err := DeriveAESKeyFromSE(ephPub);
 	if err != nil {
 		log.Fatalf("DeriveAESKeyFromSE failed: %v", err)
 	}
 
+	// Decrypt the CEK with the session key (AES-GCM)
 	c, err := aes.NewCipher(sessionKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create AES Cipher data: %v", err)
@@ -230,6 +234,7 @@ func DeriveAESKeyFromSE(ephPub []byte) ([]byte, error) {
     out := make([]byte, 32)
     outLen := C.size_t(len(out))
 
+	// Compute raw ECDH shared secret using private key in SE and ephPub
     res := C.se_ecdh_shared_secret(
         (*C.uint8_t)(&ephPub[0]), C.size_t(len(ephPub)),
         (*C.uint8_t)(&out[0]), &outLen,
