@@ -27,7 +27,10 @@ repo and inspired by the [ocicrypt-tpm-keyprovider](https://github.com/salrashid
 repo, which demonstrates similar protocols with simple symmetric key and RSA
 key encryption, respectively.
 
-For more information, see [Advancing container image security with encrypted container images](https://developer.ibm.com/articles/encrypted-container-images-for-container-image-security-at-rest/).
+For more information, see 
+- [Advancing container image security with encrypted container images](https://developer.ibm.com/articles/encrypted-container-images-for-container-image-security-at-rest/).
+- [Apple Secure Enclave](https://support.apple.com/guide/security/secure-enclave-sec59b0b31ff/web)
+- [Protecting Keys with the Secure Enclave](https://developer.apple.com/documentation/Security/protecting-keys-with-the-secure-enclave)
 
 ## Getting Started
 Since the intention of this repo is to work with Apple's Secure Enclave/Keychain,
@@ -134,7 +137,7 @@ $ skopeo inspect docker://localhost:5001/test-alpine:latest --tls-verify=false
 ```
 </details>
 
-#### Encrypt
+### Encrypt
 To start encrypting our test image, we first need to set up `ocicrypt` 
 configurations and create a keypair to reside in the SE/Keychain.
 
@@ -224,7 +227,7 @@ e6f08ae99d09: Download complete
 docker: failed to extract layer sha256:5aa68bbbc67e405a7cfa11466b02f1c9597add532909fb9a4d0f6f58a30b044e: failed to get stream processor for application/vnd.oci.image.layer.v1.tar+gzip+encrypted: exec: "ctd-decoder": executable file not found in $PATH: unknown.
 ```
 
-#### Decrypt
+### Decrypt
 Now that we know we can't run the encrypted image, let's try decrypting it.
 ```sh
 $ skopeo copy --decryption-key="provider:apple-se:apple-se://se?mode=decrypt" docker://localhost:5001/test-encrypted:latest docker-daemon:test-decrypted:latest --tls-verify=false

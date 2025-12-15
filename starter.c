@@ -49,6 +49,7 @@ static SecKeyRef create_new_key(const char *tag) {
         &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionaryAddValue(privAttrs, kSecAttrIsPermanent, kCFBooleanTrue);
     CFDictionaryAddValue(privAttrs, kSecAttrApplicationTag, tagData);
+    CFDictionaryAddValue(privAttrs, kSecAttrIsExtractable, kCFBooleanFalse); // Unecessary for SE
 
     int keySize = 256;
     CFNumberRef keySizeNum = CFNumberCreate(NULL, kCFNumberIntType, &keySize);
