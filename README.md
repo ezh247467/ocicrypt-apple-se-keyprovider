@@ -19,7 +19,8 @@ The binary in question follows Elliptic Curve Integrated Encryption Scheme
 with an ephermal P-256 private key (created upon call to encrypt) to generate a 
 shared secret. This shared secret is run through a key-derivation function
 (specifically [HKDF](https://en.wikipedia.org/wiki/HKDF)) to generate the 
-symmetric key that is used to encrypt the image layer itself.
+symmetric key that is used to encrypt the image layer itself. Check 
+[this diagram](images/workflow.png) for an example workflow of how this plugin works.
 
 This code is based off of the
 [simple-oci-keyprovider](https://github.com/lumjjb/simple-ocicrypt-keyprovider)
